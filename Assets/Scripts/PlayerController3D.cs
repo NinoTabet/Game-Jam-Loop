@@ -19,6 +19,7 @@ public class PlayerController3D : MonoBehaviour
     private bool jumpRequested;
 
     private float xRotation = 0f;
+    private bool cameraInitialized = false;
 
     void Awake()
     {
@@ -50,6 +51,17 @@ public class PlayerController3D : MonoBehaviour
         controller = GetComponent<CharacterController>();
         if (cameraTransform == null && Camera.main != null)
             cameraTransform = Camera.main.transform;
+            
+        // Initialize camera rotation system based on current camera orientation
+        if (cameraTransform != null && !cameraInitialized)
+        {
+            // Get the current X rotation of the camera and use it as our starting point
+            xRotation = cameraTransform.localEulerAngles.x;
+            // Normalize the rotation to be between -180 and 180
+            if (xRotation > 180f)
+                xRotation -= 360f;
+            cameraInitialized = true;
+        }
     }
 
     void Update()
@@ -80,10 +92,15 @@ public class PlayerController3D : MonoBehaviour
         Vector3 moveDirection = Quaternion.Euler(0, cameraTransform.eulerAngles.y, 0) * inputDirection;
         controller.Move(moveDirection.normalized * moveSpeed * Time.deltaTime);
 
-        if (jumpRequested && isGrounded)
-        {
+        if (jumpRequested && !isGrounded){
+
+            jumpRequested = false;
+
+        } else if (jumpRequested && isGrounded){
+
             velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             jumpRequested = false;
+            
         }
 
         velocity.y += gravity * Time.deltaTime;
