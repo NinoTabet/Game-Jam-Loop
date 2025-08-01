@@ -1,15 +1,16 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections.Generic;
 
-public class Recorder: MonoBehaviour
+public class Recorder : MonoBehaviour
 {
-    
     public class InputFrameData
     {
         public float horizontal;
         public float vertical;
         public bool jump;
         public Vector3 position;
+        public Quaternion rotation;
     }
 
     public enum Mode { Recording, Replaying }
@@ -18,19 +19,37 @@ public class Recorder: MonoBehaviour
     public List<InputFrameData> recordedInputs = new List<InputFrameData>();
     private int frameIndex = 0;
 
-    private CharacterController controller;
-    private Vector3 velocity;
-    public float moveSpeed = 5f;
-    public float gravity = -9.81f;
-    public float jumpHeight = 2f;
-    private float yVelocity;
-    private bool isGrounded;
-
     public GameObject clonePrefab;
 
-    void Start()
+    // Input System (for Player only)
+    private InputSystemActions controls;
+    private Vector2 moveInput = Vector2.zero;
+    private bool jumpRequested = false;
+
+    void Awake()
     {
-        controller = GetComponent<CharacterController>();
+        // Only setup input if this is the player (not a clone)
+        if (CompareTag("Player"))
+        {
+            controls = new InputSystemActions();
+
+            controls.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+            controls.Player.Move.canceled += ctx => moveInput = Vector2.zero;
+
+            controls.Player.Jump.performed += ctx => jumpRequested = true;
+        }
+    }
+
+    void OnEnable()
+    {
+        if (controls != null)
+            controls.Enable();
+    }
+
+    void OnDisable()
+    {
+        if (controls != null)
+            controls.Disable();
     }
 
     void Update()
@@ -47,52 +66,28 @@ public class Recorder: MonoBehaviour
 
     void RecordUpdate()
     {
-        isGrounded = controller.isGrounded;
-        if (isGrounded && yVelocity < 0)
-            yVelocity = 0f;
-
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-
-        Vector3 move = transform.right * h + transform.forward * v;
-        controller.Move(move.normalized * moveSpeed * Time.deltaTime);
-
-        if (Input.GetButtonDown("Jump") && isGrounded)
-            yVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-        yVelocity += gravity * Time.deltaTime;
-        velocity.y = yVelocity;
-        controller.Move(velocity * Time.deltaTime);
-
         InputFrameData frame = new InputFrameData
         {
-            horizontal = h,
-            vertical = v,
-            jump = Input.GetButtonDown("Jump"),
-            position = transform.position
+            horizontal = moveInput.x,
+            vertical = moveInput.y,
+            jump = jumpRequested,
+            position = transform.position,
+            rotation = transform.rotation
         };
 
         recordedInputs.Add(frame);
+        jumpRequested = false;
     }
 
     void ReplayUpdate()
     {
-        if (frameIndex >= recordedInputs.Count) return;
+        if (frameIndex >= recordedInputs.Count)
+            return;
 
         InputFrameData frame = recordedInputs[frameIndex];
 
-        float h = frame.horizontal;
-        float v = frame.vertical;
-
-        Vector3 move = transform.right * h + transform.forward * v;
-        controller.Move(move.normalized * moveSpeed * Time.deltaTime);
-
-        if (frame.jump && controller.isGrounded)
-            yVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-
-        yVelocity += gravity * Time.deltaTime;
-        velocity.y = yVelocity;
-        controller.Move(velocity * Time.deltaTime);
+        transform.position = frame.position;
+        transform.rotation = frame.rotation;
 
         frameIndex++;
     }
@@ -104,18 +99,49 @@ public class Recorder: MonoBehaviour
         mode = Mode.Recording;
     }
 
+    public void StopRecording()
+    {
+        if (mode == Mode.Recording)
+        {
+            Debug.Log("Recording stopped");
+
+            if (CompareTag("Player"))
+            {
+                this.enabled = false; // stop recorder on player
+            }
+            else
+            {
+                mode = Mode.Replaying;
+            }
+        }
+    }
+
     public void StartReplaying()
     {
         frameIndex = 0;
         mode = Mode.Replaying;
     }
 
+    public void ResetReplayIndex()
+    {
+        frameIndex = 0;
+    }
+
+
     public void SpawnClone()
     {
         GameObject clone = Instantiate(clonePrefab, transform.position, transform.rotation);
+
+        // Set clone tag so its input doesn't initialize
+        clone.tag = "Clone";
+
+        // Disable camera on clone, just in case
+        Camera cloneCamera = clone.GetComponentInChildren<Camera>();
+        if (cloneCamera != null)
+            cloneCamera.enabled = false;
+
         Recorder cloneRecorder = clone.GetComponent<Recorder>();
         cloneRecorder.recordedInputs = new List<InputFrameData>(recordedInputs);
         cloneRecorder.mode = Mode.Replaying;
     }
 }
-
