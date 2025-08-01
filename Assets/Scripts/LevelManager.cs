@@ -56,20 +56,13 @@ public class LevelManager : MonoBehaviour
             {
                 // Return to spawn when recording is complete and player is outside start zone
                 TeleportPlayerToSpawn();
-                ShowPrompt("Press L to start clone replay, then leave start zone for next recording");
+
             }
-            else if (playerInStartZone)
+            else if (playerInStartZone && clones.Count > 0)
             {
-                // Start clone replay when in start zone
-                if (clones.Count > 0)
-                {
-                    StartPlayback();
-                }
-                else
-                {
-                    ShowPrompt("No clones to replay. Leave start zone to begin recording.");
-                }
+             StartPlayback();
             }
+
         }
         // R key - Reset level completely
         if (Keyboard.current.rKey.wasPressedThisFrame)
@@ -109,12 +102,10 @@ public class LevelManager : MonoBehaviour
             playerController.enabled = false;
         }
 
-        ShowPrompt("Press L to return to spawn");
     }
 
     void StartPlayback()
     {
-        ShowPrompt("Playing back sequence...");
 
         Debug.Log($"Starting playback with {clones.Count} clones");
 
@@ -205,7 +196,7 @@ public class LevelManager : MonoBehaviour
             timerRunning = true;
             timer = loopDuration;
             recordingComplete = false;
-            ShowPrompt("Recording started...");
+
         }
         else
         {
@@ -249,7 +240,6 @@ public class LevelManager : MonoBehaviour
         canStartNextRecording = true;
         pendingRecording = null;
 
-        ShowPrompt("Level Complete!");
     }
 
     private void SpawnClone(List<Recorder.InputFrameData> inputData)
@@ -344,7 +334,6 @@ public class LevelManager : MonoBehaviour
             playerRecorder.mode = Recorder.Mode.Recording;
         }
 
-        ShowPrompt("Level reset. Leave start zone to begin recording.");
     }
 
     // Called from your StartZone trigger script to keep track if player is inside
@@ -377,11 +366,6 @@ public class LevelManager : MonoBehaviour
                 }
             }
         }
-    }
-
-    void ShowPrompt(string message)
-    {
-        UIPrompt.ShowPrompt(message);
     }
 
     private void StopAllClones()
