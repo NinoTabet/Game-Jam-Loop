@@ -19,7 +19,6 @@ public class LevelManager : MonoBehaviour
     private float timer = 0f;
     private bool timerRunning = false;
     private bool recordingComplete = false;
-    private bool isPlayingBack = false;
     private List<Recorder.InputFrameData> pendingRecording = null;
 
     private Recorder playerRecorder;
@@ -61,10 +60,9 @@ public class LevelManager : MonoBehaviour
             }
             else if (playerInStartZone)
             {
-                // Reset all clones to spawn and start replay when in start zone
-                if (clonesSpawned > 0)
+                // Start clone replay when in start zone
+                if (clones.Count > 0)
                 {
-                    ResetClonesToStart();
                     StartPlayback();
                 }
                 else
@@ -73,17 +71,6 @@ public class LevelManager : MonoBehaviour
                 }
             }
         }
-
-        // P key - Play back the sequence (kept for compatibility)
-        if (Keyboard.current.pKey.wasPressedThisFrame)
-        {
-            if (playerInStartZone && clonesSpawned > 0)
-            {
-                ResetClonesToStart();
-                StartPlayback();
-            }
-        }
-
         // R key - Reset level completely
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
@@ -97,7 +84,7 @@ public class LevelManager : MonoBehaviour
         {
             timer -= Time.deltaTime;
 
-            if (timer <= 0f && clonesSpawned < maxClones && !playerInStartZone)
+            if (timer <= 0f && clones.Count < maxClones && !playerInStartZone)
             {
                 CompleteRecording();
             }
@@ -127,12 +114,12 @@ public class LevelManager : MonoBehaviour
 
     void StartPlayback()
     {
-        if (isPlayingBack) return;
-
-        isPlayingBack = true;
         ShowPrompt("Playing back sequence...");
 
         Debug.Log($"Starting playback with {clones.Count} clones");
+
+        // Reset all clones to start position first
+        ResetClonesToStart();
 
         // Start all clones replaying
         foreach (var clone in clones)
@@ -152,31 +139,6 @@ public class LevelManager : MonoBehaviour
                 }
             }
         }
-
-        // Start a coroutine to reset playback state after completion
-        StartCoroutine(ResetPlaybackAfterDelay());
-    }
-
-    IEnumerator ResetPlaybackAfterDelay()
-    {
-        // Wait for the longest recording to complete
-        float maxDuration = 0f;
-        foreach (var clone in clones)
-        {
-            if (clone != null)
-            {
-                Recorder cloneRecorder = clone.GetComponent<Recorder>();
-                if (cloneRecorder != null)
-                {
-                    float cloneDuration = cloneRecorder.recordedInputs.Count * Time.fixedDeltaTime;
-                    maxDuration = Mathf.Max(maxDuration, cloneDuration);
-                }
-            }
-        }
-
-        yield return new WaitForSeconds(maxDuration + 1f); // Add 1 second buffer
-        isPlayingBack = false;
-        ShowPrompt("Press L to replay or leave start zone for next recording");
     }
 
     void TeleportPlayerToSpawn()
@@ -204,15 +166,19 @@ public class LevelManager : MonoBehaviour
         // Spawn the clone now that player is back at spawn
         if (pendingRecording != null)
         {
-            Debug.Log($"Spawning clone with {pendingRecording.Count} recorded frames");
-            Debug.Log($"Pending recording data check - First frame: {pendingRecording[0].position}, Last frame: {pendingRecording[pendingRecording.Count - 1].position}");
-            
-            // Clear old clones when spawning a new one
-            ClearAllClones();
+            StartPlayback();
             
             SpawnClone(pendingRecording);
             clonesSpawned++;
             pendingRecording = null;
+            
+            // Clear player recorder data AFTER clone is spawned and has its own copy
+            if (playerRecorder != null)
+            {
+                playerRecorder.recordedInputs.Clear();
+                playerRecorder.ResetReplayIndex();
+                playerRecorder.mode = Recorder.Mode.Recording;
+            }
         }
         else
         {
@@ -222,21 +188,12 @@ public class LevelManager : MonoBehaviour
         // Reset recording state for next recording
         recordingComplete = false;
         canStartNextRecording = true;
-        
-        // Reset player recorder for next recording - but preserve the recorded data first
-        if (playerRecorder != null)
-        {
-            // Clear the recorded inputs after spawning the clone
-            playerRecorder.recordedInputs.Clear();
-            playerRecorder.ResetReplayIndex();
-            playerRecorder.mode = Recorder.Mode.Recording;
-        }
     }
 
     public void PlayerExitedStart()
     {
         // Only start recording if we can start next recording and haven't reached max clones
-        if (canStartNextRecording && !timerRunning && clonesSpawned < maxClones)
+        if (canStartNextRecording && !timerRunning && clones.Count < maxClones)
         {
             Debug.Log("Starting new recording session");
             
@@ -252,7 +209,7 @@ public class LevelManager : MonoBehaviour
         }
         else
         {
-            Debug.Log($"Cannot start recording: canStartNextRecording={canStartNextRecording}, timerRunning={timerRunning}, clonesSpawned={clonesSpawned}, maxClones={maxClones}");
+            Debug.Log($"Cannot start recording: canStartNextRecording={canStartNextRecording}, timerRunning={timerRunning}, clones.Count={clones.Count}, maxClones={maxClones}");
         }
     }
 
@@ -329,14 +286,6 @@ public class LevelManager : MonoBehaviour
         cloneRecorder.mode = Recorder.Mode.Replaying;
         cloneRecorder.ResetReplayIndex(); // Ensure replay index is reset
 
-        // Disable clone camera if present
-        Camera cam = clone.GetComponentInChildren<Camera>();
-        if (cam != null) cam.enabled = false;
-
-        // Disable clone movement controller
-        PlayerController3D cloneController = clone.GetComponent<PlayerController3D>();
-        if (cloneController != null) cloneController.enabled = false;
-
         clones.Add(clone);
         
         Debug.Log($"Clone #{clonesSpawned + 1} spawned with {clonedData.Count} recorded frames at position {spawnPoint.position}");
@@ -356,7 +305,7 @@ public class LevelManager : MonoBehaviour
     private void ResetClonesToStart()
     {
         Debug.Log($"Resetting {clones.Count} clones to start position");
-        
+
         foreach (var clone in clones)
         {
             if (clone == null) continue;
@@ -364,9 +313,13 @@ public class LevelManager : MonoBehaviour
             Recorder cloneRecorder = clone.GetComponent<Recorder>();
             if (cloneRecorder != null)
             {
+                // Stop any current replay first
+                cloneRecorder.StopReplaying();
+                
+                // Move clone to spawn position
                 clone.transform.position = spawnPoint.position;
                 clone.transform.rotation = spawnPoint.rotation;
-                cloneRecorder.ResetReplayIndex();
+                
                 Debug.Log($"Reset clone {clone.name} to position {spawnPoint.position}");
             }
         }
@@ -380,7 +333,6 @@ public class LevelManager : MonoBehaviour
         canStartNextRecording = true;
         timerRunning = false;
         recordingComplete = false;
-        isPlayingBack = false;
         pendingRecording = null;
 
         // Reset player
@@ -400,7 +352,7 @@ public class LevelManager : MonoBehaviour
     {
         playerInStartZone = isInside;
         
-        Debug.Log($"Player in start zone: {isInside}, canStartNextRecording: {canStartNextRecording}, timerRunning: {timerRunning}, clonesSpawned: {clonesSpawned}");
+        Debug.Log($"Player in start zone: {isInside}, canStartNextRecording: {canStartNextRecording}, timerRunning: {timerRunning}, clones.Count: {clones.Count}");
         
         // Handle recording state based on player location
         if (playerRecorder != null)
@@ -414,14 +366,14 @@ public class LevelManager : MonoBehaviour
             else
             {
                 // Enable recording when leaving start zone (only if we should be recording)
-                if (canStartNextRecording && !timerRunning && clonesSpawned < maxClones)
+                if (canStartNextRecording && !timerRunning && clones.Count < maxClones)
                 {
                     playerRecorder.EnableRecording();
                     Debug.Log("Recording enabled - player left start zone");
                 }
                 else
                 {
-                    Debug.Log($"Recording NOT enabled - conditions not met: canStartNextRecording={canStartNextRecording}, timerRunning={timerRunning}, clonesSpawned={clonesSpawned}");
+                    Debug.Log($"Recording NOT enabled - conditions not met: canStartNextRecording={canStartNextRecording}, timerRunning={timerRunning}, clones.Count={clones.Count}");
                 }
             }
         }
@@ -430,5 +382,22 @@ public class LevelManager : MonoBehaviour
     void ShowPrompt(string message)
     {
         UIPrompt.ShowPrompt(message);
+    }
+
+    private void StopAllClones()
+    {
+        Debug.Log("Stopping all clones from current replay");
+        foreach (var clone in clones)
+        {
+            if (clone == null) continue;
+            // find all objects with the tag "Clone"
+            GameObject[] globalclones = GameObject.FindGameObjectsWithTag("Clone");
+            foreach (var globalclone in globalclones)
+            {
+                Recorder cloneRecorder = globalclone.GetComponent<Recorder>();
+                // set the frameindex to 0
+                cloneRecorder.StartReplaying();
+            }
+        }
     }
 }

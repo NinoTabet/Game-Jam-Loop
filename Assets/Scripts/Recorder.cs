@@ -123,6 +123,7 @@ public class Recorder : MonoBehaviour
 
     public void DisableRecording()
     {
+        Debug.Log($"RecordedInputs count: {recordedInputs.Count}");
         shouldRecord = false;
         Debug.Log($"Recording disabled for {gameObject.name}");
     }
@@ -133,16 +134,14 @@ public class Recorder : MonoBehaviour
         {
             shouldRecord = false;
             Debug.Log("Recording stopped");
-
-            if (CompareTag("Player"))
-            {
-                this.enabled = false; // stop recorder on player
-            }
-            else
-            {
-                mode = Mode.Replaying;
-            }
         }
+    }
+
+    public void StopReplaying()
+    {
+        mode = Mode.Replaying;
+        frameIndex = 0;
+        Debug.Log($"Stopped replaying for {gameObject.name}");
     }
 
     public void StartReplaying()
@@ -150,27 +149,20 @@ public class Recorder : MonoBehaviour
         frameIndex = 0;
         mode = Mode.Replaying;
         Debug.Log($"Started replaying for {gameObject.name} with {recordedInputs.Count} frames");
+        
+        // Debug the actual data the clone has
+        if (recordedInputs.Count > 0)
+        {
+            Debug.Log($"Clone {gameObject.name} has data from {recordedInputs[0].position} to {recordedInputs[recordedInputs.Count - 1].position}");
+        }
+        else
+        {
+            Debug.LogWarning($"Clone {gameObject.name} has NO recorded data!");
+        }
     }
 
     public void ResetReplayIndex()
     {
         frameIndex = 0;
-    }
-
-    public void SpawnClone()
-    {
-        GameObject clone = Instantiate(clonePrefab, transform.position, transform.rotation);
-
-        // Set clone tag so its input doesn't initialize
-        clone.tag = "Clone";
-
-        // Disable camera on clone, just in case
-        Camera cloneCamera = clone.GetComponentInChildren<Camera>();
-        if (cloneCamera != null)
-            cloneCamera.enabled = false;
-
-        Recorder cloneRecorder = clone.GetComponent<Recorder>();
-        cloneRecorder.recordedInputs = new List<InputFrameData>(recordedInputs);
-        cloneRecorder.mode = Mode.Replaying;
     }
 }
