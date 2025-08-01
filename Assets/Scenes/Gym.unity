@@ -353,7 +353,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cdf43580800acb4bb0887fb8ba8d420, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loopDuration: 10
+  loopDuration: 5
   maxClones: 3
   playerPrefab: {fileID: 3552812337695437884, guid: a485eb0d705894c429515a3ddd9a9944, type: 3}
   spawnPoint: {fileID: 1178365454}
