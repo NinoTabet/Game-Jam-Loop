@@ -35,12 +35,14 @@ public class PlayerController3D : MonoBehaviour
 
     void OnEnable()
     {
-        controls.Player.Enable();
+        if (controls != null)
+            controls.Player.Enable();
     }
 
     void OnDisable()
     {
-        controls.Player.Disable();
+        if (controls != null)
+            controls.Player.Disable();
     }
 
     void Start()

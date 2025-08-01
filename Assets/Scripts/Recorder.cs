@@ -26,6 +26,9 @@ public class Recorder : MonoBehaviour
     private Vector2 moveInput = Vector2.zero;
     private bool jumpRequested = false;
 
+    // Recording control
+    private bool shouldRecord = false;
+
     void Awake()
     {
         // Only setup input if this is the player (not a clone)
@@ -66,6 +69,9 @@ public class Recorder : MonoBehaviour
 
     void RecordUpdate()
     {
+        // Only record if we should be recording
+        if (!shouldRecord) return;
+
         InputFrameData frame = new InputFrameData
         {
             horizontal = moveInput.x,
@@ -77,12 +83,21 @@ public class Recorder : MonoBehaviour
 
         recordedInputs.Add(frame);
         jumpRequested = false;
+        
+        // Debug recording progress
+        if (recordedInputs.Count % 60 == 0) // Log every 60 frames (about once per second)
+        {
+            Debug.Log($"Recording frame {recordedInputs.Count} for {gameObject.name} at position {transform.position}");
+        }
     }
 
     void ReplayUpdate()
     {
         if (frameIndex >= recordedInputs.Count)
+        {
+            Debug.Log($"Replay complete for {gameObject.name}, frameIndex: {frameIndex}, total frames: {recordedInputs.Count}");
             return;
+        }
 
         InputFrameData frame = recordedInputs[frameIndex];
 
@@ -94,15 +109,29 @@ public class Recorder : MonoBehaviour
 
     public void StartRecording()
     {
-        recordedInputs.Clear();
+        // Don't clear recordedInputs here - let LevelManager handle it after spawning clone
         frameIndex = 0;
         mode = Mode.Recording;
+        // shouldRecord will be set by LevelManager based on player location
+    }
+
+    public void EnableRecording()
+    {
+        shouldRecord = true;
+        Debug.Log($"Recording enabled for {gameObject.name}");
+    }
+
+    public void DisableRecording()
+    {
+        shouldRecord = false;
+        Debug.Log($"Recording disabled for {gameObject.name}");
     }
 
     public void StopRecording()
     {
         if (mode == Mode.Recording)
         {
+            shouldRecord = false;
             Debug.Log("Recording stopped");
 
             if (CompareTag("Player"))
@@ -120,13 +149,13 @@ public class Recorder : MonoBehaviour
     {
         frameIndex = 0;
         mode = Mode.Replaying;
+        Debug.Log($"Started replaying for {gameObject.name} with {recordedInputs.Count} frames");
     }
 
     public void ResetReplayIndex()
     {
         frameIndex = 0;
     }
-
 
     public void SpawnClone()
     {
