@@ -6,11 +6,10 @@ using UnityEngine;
 public class LevelManager : MonoBehaviour
 {
     [Header("Loop Settings")]
-    public float loopDuration = 10f;
-    public int maxClones = 3;
+    private float loopDuration;
+    private int maxClones;
     public GameObject playerPrefab;
-    public Transform spawnPoint;
-    public float cloneStartDelay = 3f;
+    private Transform spawnPoint;
 
     [Header("UI")]
     public GameObject promptUI; // Assign a UI element to show prompts
@@ -30,6 +29,54 @@ public class LevelManager : MonoBehaviour
 
     private bool playerInStartZone = true;
     private bool canStartNextRecording = true;
+
+    // Method to receive level settings from StartLevel
+    public void SetLevelSettings(float duration, int maxClonesCount)
+    {
+        loopDuration = duration;
+        maxClones = maxClonesCount;
+        Debug.Log($"Level settings updated: loopDuration={loopDuration}, maxClones={maxClones}");
+    }
+
+    // Method to set spawn point from StartLevel
+    public void SetSpawnPoint(Transform newSpawnPoint)
+    {
+        spawnPoint = newSpawnPoint;
+        Debug.Log($"Spawn point updated to: {spawnPoint.position}");
+    }
+
+    // Method to clear all data when entering a start zone for the first time
+    public void ClearAllData()
+    {
+        Debug.Log("Clearing all recording data and clones for new start zone");
+        
+        // Clear all clones
+        ClearAllClones();
+        
+        // Clear all recordings
+        allRecordings.Clear();
+        
+        // Reset recording state
+        canStartNextRecording = true;
+        timerRunning = false;
+        recordingComplete = false;
+        pendingRecording = null;
+        clonesSpawned = 0;
+        
+        // Clear player recorder data
+        if (playerRecorder != null)
+        {
+            playerRecorder.recordedInputs.Clear();
+            playerRecorder.ResetReplayIndex();
+            playerRecorder.mode = Recorder.Mode.Recording;
+        }
+        
+        // Re-enable player movement
+        if (playerController != null)
+        {
+            playerController.enabled = true;
+        }
+    }
 
     void Start()
     {
@@ -134,6 +181,12 @@ public class LevelManager : MonoBehaviour
 
     void TeleportPlayerToSpawn()
     {
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning("Spawn point is null! Cannot teleport player.");
+            return;
+        }
+
         CharacterController controller = playerInstance.GetComponent<CharacterController>();
         if (controller != null)
         {
@@ -216,34 +269,14 @@ public class LevelManager : MonoBehaviour
         clonesSpawned = 0;
     }
 
-    public void PlayerEnteredEnd()
-    {
-        timerRunning = false;
-        recordingComplete = false;
-        playerRecorder.StopRecording();
-
-        // Re-enable player movement
-        if (playerController != null)
-        {
-            playerController.enabled = true;
-        }
-
-        foreach (var clone in clones)
-        {
-            if (clone != null)
-                Destroy(clone);
-        }
-
-        clones.Clear();
-        allRecordings.Clear();
-        clonesSpawned = 0;
-        canStartNextRecording = true;
-        pendingRecording = null;
-
-    }
-
     private void SpawnClone(List<Recorder.InputFrameData> inputData)
     {
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning("Spawn point is null! Cannot spawn clone.");
+            return;
+        }
+
         Debug.Log($"SpawnClone called with {inputData.Count} frames");
         if (inputData.Count > 0)
         {
@@ -294,6 +327,12 @@ public class LevelManager : MonoBehaviour
 
     private void ResetClonesToStart()
     {
+        if (spawnPoint == null)
+        {
+            Debug.LogWarning("Spawn point is null! Cannot reset clones.");
+            return;
+        }
+
         Debug.Log($"Resetting {clones.Count} clones to start position");
 
         foreach (var clone in clones)
