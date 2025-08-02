@@ -11,9 +11,6 @@ public class LevelManager : MonoBehaviour
     public GameObject playerPrefab;
     private Transform spawnPoint;
 
-    [Header("UI")]
-    public GameObject promptUI; // Assign a UI element to show prompts
-
     private int clonesSpawned = 0;
     private float timer = 0f;
     private bool timerRunning = false;
