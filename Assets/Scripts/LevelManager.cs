@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using TMPro;
 
 public class LevelManager : MonoBehaviour
 {
@@ -27,11 +28,17 @@ public class LevelManager : MonoBehaviour
     private bool playerInStartZone = true;
     private bool canStartNextRecording = true;
 
+    [SerializeField] private TextMeshProUGUI loopMax;
+    [SerializeField] private TextMeshProUGUI currentLoop;
+    private float remainingClones => maxClones - clones.Count;
+
     // Method to receive level settings from StartLevel
     public void SetLevelSettings(float duration, int maxClonesCount)
     {
         loopDuration = duration;
         maxClones = maxClonesCount;
+        loopMax.text = maxClonesCount.ToString();
+        currentLoop.text = remainingClones.ToString();
         Debug.Log($"Level settings updated: loopDuration={loopDuration}, maxClones={maxClones}");
     }
 
@@ -112,6 +119,8 @@ public class LevelManager : MonoBehaviour
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             ResetLevel();
+
+            currentLoop.text = remainingClones.ToString();
         }
     }
 
@@ -130,6 +139,8 @@ public class LevelManager : MonoBehaviour
 
     void CompleteRecording()
     {
+        currentLoop.text = remainingClones.ToString();
+
         timerRunning = false;
         recordingComplete = true;
         playerRecorder.StopRecording();
