@@ -283,7 +283,7 @@ GameObject:
   - component: {fileID: 7983556827479772600}
   - component: {fileID: 4066982845997630195}
   m_Layer: 0
-  m_Name: AnimatedPrefab
+  m_Name: AnimatedClone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
