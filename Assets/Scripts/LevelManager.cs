@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class LevelManager : MonoBehaviour
 {
@@ -30,6 +31,8 @@ public class LevelManager : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI loopMax;
     [SerializeField] private TextMeshProUGUI currentLoop;
+    [SerializeField] private Image loopTimeDisplay;
+    [SerializeField] private Image timeDisplayFill;
     private float remainingClones => maxClones - clones.Count;
 
     // Method to receive level settings from StartLevel
@@ -90,6 +93,9 @@ public class LevelManager : MonoBehaviour
             playerRecorder = playerInstance.GetComponent<Recorder>();
             playerController = playerInstance.GetComponent<PlayerController3D>();
         }
+
+        loopTimeDisplay.enabled = false;
+        timeDisplayFill.enabled = false;
     }
 
     void Update()
@@ -130,6 +136,8 @@ public class LevelManager : MonoBehaviour
         {
             timer -= Time.deltaTime;
 
+            timeDisplayFill.fillAmount = timer / loopDuration;
+
             if (timer <= 0f && clones.Count < maxClones && !playerInStartZone)
             {
                 CompleteRecording();
@@ -140,6 +148,8 @@ public class LevelManager : MonoBehaviour
     void CompleteRecording()
     {
         currentLoop.text = remainingClones.ToString();
+        loopTimeDisplay.enabled = false;
+        timeDisplayFill.enabled = false;
 
         timerRunning = false;
         recordingComplete = true;
@@ -258,6 +268,9 @@ public class LevelManager : MonoBehaviour
             timer = loopDuration;
             recordingComplete = false;
 
+            loopTimeDisplay.enabled = true;
+            timeDisplayFill.enabled = true;
+            timeDisplayFill.fillAmount = 1;
         }
         else
         {
