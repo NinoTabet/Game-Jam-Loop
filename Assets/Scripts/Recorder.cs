@@ -21,6 +21,8 @@ public class Recorder : MonoBehaviour
 
     public GameObject clonePrefab;
 
+    public Animator animator;
+
     // Input System (for Player only)
     private InputSystemActions controls;
     private Vector2 moveInput = Vector2.zero;
@@ -95,11 +97,17 @@ public class Recorder : MonoBehaviour
     {
         if (frameIndex >= recordedInputs.Count)
         {
+            animator.ResetTrigger("Jump");
+            animator.SetBool("Walking", false);
+
             Debug.Log($"Replay complete for {gameObject.name}, frameIndex: {frameIndex}, total frames: {recordedInputs.Count}");
             return;
         }
 
         InputFrameData frame = recordedInputs[frameIndex];
+
+        if (frame.position.y - transform.position.y > 10) animator.SetTrigger("Jump");
+        animator.SetBool("Walking", Mathf.Abs(frame.position.x - transform.position.x) > 0.1);
 
         transform.position = frame.position;
         transform.rotation = frame.rotation;
