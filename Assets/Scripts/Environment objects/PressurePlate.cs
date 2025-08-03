@@ -15,6 +15,7 @@ public class PressurePlate : ActivatableItem
     {
         if (Keyboard.current.rKey.wasPressedThisFrame){
             isActivated = false;
+            IsActive = false;
         }
         // Check if any object (player or clone) is on the plate
         if (objectsOnPlate > 0 && !isActivated)
@@ -37,6 +38,7 @@ public class PressurePlate : ActivatableItem
     void DeactivatePlate()
     {
         isActivated = false;
+        IsActive = false;
     }
     
     private void OnTriggerEnter(Collider other)
