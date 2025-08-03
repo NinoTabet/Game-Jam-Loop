@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEditor;
 
 public class LevelManager : MonoBehaviour
 {
@@ -33,6 +34,11 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private TextMeshProUGUI currentLoop;
     [SerializeField] private Image loopTimeDisplay;
     [SerializeField] private Image timeDisplayFill;
+    [SerializeField] private Canvas mainMenu;
+    [SerializeField] private GameObject howTo;
+    [SerializeField] private GameObject hintButton;
+    [SerializeField] private GameObject hintDisplay;
+    [SerializeField] private GameObject pauseDisplay;
     private float remainingClones => maxClones - clones.Count;
 
     // Method to receive level settings from StartLevel
@@ -92,7 +98,11 @@ public class LevelManager : MonoBehaviour
         {
             playerRecorder = playerInstance.GetComponent<Recorder>();
             playerController = playerInstance.GetComponent<PlayerController3D>();
+
+            playerController.OnDisable();
         }
+
+        mainMenu.enabled = true;
 
         loopTimeDisplay.enabled = false;
         timeDisplayFill.enabled = false;
@@ -127,6 +137,16 @@ public class LevelManager : MonoBehaviour
             ResetLevel();
 
             currentLoop.text = remainingClones.ToString();
+        }
+        // H key - Toggle Hint
+        if (Keyboard.current.hKey.wasPressedThisFrame)
+        {
+            ToggleHint();
+        }
+        // Esc key - Toggle Hint
+        if (Keyboard.current.escapeKey.wasPressedThisFrame)
+        {
+            TogglePause();
         }
     }
 
@@ -413,6 +433,52 @@ public class LevelManager : MonoBehaviour
                 // set the frameindex to 0
                 cloneRecorder.StartReplaying();
             }
+        }
+    }
+
+    public void StartGame()
+    {
+        mainMenu.enabled = false;
+        playerController.OnEnable();
+    }
+
+    public void OpenHowTo()
+    {
+        howTo.SetActive(true);
+    }
+
+    public void CloseHowTo()
+    {
+        howTo.SetActive(false);
+    }
+
+    public void Exit()
+    {
+        Application.Quit();
+#if UNITY_EDITOR
+        EditorApplication.isPlaying = false;
+#endif
+    }
+
+    public void ToggleHint()
+    {
+        hintButton.SetActive(!hintButton.activeSelf);
+        hintDisplay.SetActive(!hintDisplay.activeSelf);
+    }
+
+    public void TogglePause()
+    {
+        pauseDisplay.SetActive(!pauseDisplay.activeSelf);
+
+        if (pauseDisplay.activeSelf)
+        {
+            playerController.OnDisable();
+
+        }
+        else
+        {
+            playerController.OnEnable();
+
         }
     }
 }
