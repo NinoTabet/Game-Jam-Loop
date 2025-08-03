@@ -77,8 +77,6 @@ public class Door : MonoBehaviour
     protected void OnActivatableItemChanged(bool isActive)
     {
         CheckAccess();
-        Debug.Log("Button pressed MEOW");
-        Debug.Log("Is active state MEOW: ");
         if (hasAccess){
             DoorOpen();
         }else if (transform.position != startingPosition && isDoorOpen){

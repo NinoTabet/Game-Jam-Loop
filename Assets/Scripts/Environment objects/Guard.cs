@@ -4,7 +4,10 @@ using UnityEngine.InputSystem;
 public class Guard : MonoBehaviour
 {
     [Header("Guard Settings")]
+    [SerializeField] private Material playerSeenMaterial;
+    [SerializeField] private Material playerNotSeenMaterial;
     
+    private MeshRenderer meshRenderer;
     private Transform playerTransform;
     private Transform parentTransform; // The parent object to rotate
     public Transform cameraTransform;
@@ -17,6 +20,7 @@ public class Guard : MonoBehaviour
         // Get the parent transform (the whole camera assembly)
         parentTransform = transform.parent;
         originalCameraRotation = cameraTransform.rotation;
+        meshRenderer = GetComponent<MeshRenderer>();
 
         if (parentTransform == null)
         {
@@ -42,6 +46,7 @@ public class Guard : MonoBehaviour
             cameraTransform.rotation = originalCameraRotation;
             playerTransform = null;
             playerSeen = false;
+            meshRenderer.material = playerNotSeenMaterial;
         }
 
     }
@@ -49,6 +54,7 @@ public class Guard : MonoBehaviour
     void OnTriggerEnter(Collider other){
         if (other.gameObject.tag == "Player"){
             playerSeen = true;
+            meshRenderer.material = playerSeenMaterial;
         }
         playerTransform = other.transform;
 
@@ -67,6 +73,7 @@ public class Guard : MonoBehaviour
         Debug.Log("Guard returning to original position");
         if (other.gameObject.tag == "Player"){
             playerSeen = false;
+            meshRenderer.material = playerNotSeenMaterial;
         }
         playerTransform = null;
     }

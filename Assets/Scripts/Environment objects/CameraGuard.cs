@@ -1,13 +1,21 @@
 using UnityEngine;
 
 public class CameraGuard : ActivatableItem
-{
+{    
+    [Header("Guard Settings")]
+    [SerializeField] private Material playerSeenMaterial;
+    [SerializeField] private Material playerNotSeenMaterial;
+    
+    private MeshRenderer meshRenderer;
+    private Transform playerTransform;
     private GameObject followTarget;
     protected bool playerNotSeen = true;
     public Quaternion originalTransformRotation;
     
     void Awake(){
         originalTransformRotation = transform.parent.rotation;
+        IsActive = playerNotSeen;
+        meshRenderer = GetComponent<MeshRenderer>();
     }
 
     void OnTriggerStay(Collider other){
@@ -34,5 +42,6 @@ public class CameraGuard : ActivatableItem
     public void PlayerSeenCheck(){
         playerNotSeen = !playerNotSeen;
         IsActive = playerNotSeen;
+        meshRenderer.material = playerNotSeen ? playerNotSeenMaterial : playerSeenMaterial;
     }
 }
