@@ -71,7 +71,7 @@ public class LevelManager : MonoBehaviour
         // Re-enable player movement
         if (playerController != null)
         {
-            playerController.enabled = true;
+            playerController.OnEnable();
         }
     }
 
@@ -136,16 +136,7 @@ public class LevelManager : MonoBehaviour
 
         // Store the recording but don't spawn clone yet
         pendingRecording = new List<Recorder.InputFrameData>(playerRecorder.recordedInputs);
-        
-        Debug.Log($"Recording completed. Player recorder has {playerRecorder.recordedInputs.Count} frames");
-        Debug.Log($"Pending recording now has {pendingRecording.Count} frames");
-
-        // Disable player movement
-        if (playerController != null)
-        {
-            playerController.enabled = false;
-        }
-
+        playerController.OnDisable();
     }
 
     void StartPlayback()
@@ -178,14 +169,11 @@ public class LevelManager : MonoBehaviour
 
     void TeleportPlayerToSpawn()
     {
-        if (spawnPoint == null)
-        {
-            Debug.LogWarning("Spawn point is null! Cannot teleport player.");
-            return;
-        }
 
         playerInstance.transform.position = spawnPoint.position;
         playerInstance.transform.rotation = spawnPoint.rotation;
+
+        playerController.OnEnable();
 
         // Spawn the clone now that player is back at spawn
         if (pendingRecording != null)
