@@ -33,13 +33,13 @@ public class PlayerController3D : MonoBehaviour
         controls.Player.Look.canceled += ctx => lookInput = Vector2.zero;
     }
 
-    void OnEnable()
+    public void OnEnable()
     {
         if (controls != null)
             controls.Player.Enable();
     }
 
-    void OnDisable()
+    public void OnDisable()
     {
         if (controls != null)
             controls.Player.Disable();

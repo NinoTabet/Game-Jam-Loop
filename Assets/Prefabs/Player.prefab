@@ -168,7 +168,7 @@ Transform:
   m_GameObject: {fileID: 3552812337695437884}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.1483016, y: 1.0000005, z: -7.700237}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -306,7 +306,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mode: 0
-  moveSpeed: 5
-  gravity: -9.81
-  jumpHeight: 2
   clonePrefab: {fileID: 0}
