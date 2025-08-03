@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.InputSystem;
 using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
 
 public class LevelManager : MonoBehaviour
 {
@@ -27,11 +29,19 @@ public class LevelManager : MonoBehaviour
     private bool playerInStartZone = true;
     private bool canStartNextRecording = true;
 
+    [SerializeField] private TextMeshProUGUI loopMax;
+    [SerializeField] private TextMeshProUGUI currentLoop;
+    [SerializeField] private Image loopTimeDisplay;
+    [SerializeField] private Image timeDisplayFill;
+    private float remainingClones => maxClones - clones.Count;
+
     // Method to receive level settings from StartLevel
     public void SetLevelSettings(float duration, int maxClonesCount)
     {
         loopDuration = duration;
         maxClones = maxClonesCount;
+        loopMax.text = maxClonesCount.ToString();
+        currentLoop.text = remainingClones.ToString();
         Debug.Log($"Level settings updated: loopDuration={loopDuration}, maxClones={maxClones}");
     }
 
@@ -83,6 +93,9 @@ public class LevelManager : MonoBehaviour
             playerRecorder = playerInstance.GetComponent<Recorder>();
             playerController = playerInstance.GetComponent<PlayerController3D>();
         }
+
+        loopTimeDisplay.enabled = false;
+        timeDisplayFill.enabled = false;
     }
 
     void Update()
@@ -112,6 +125,8 @@ public class LevelManager : MonoBehaviour
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             ResetLevel();
+
+            currentLoop.text = remainingClones.ToString();
         }
     }
 
@@ -120,6 +135,8 @@ public class LevelManager : MonoBehaviour
         if (timerRunning)
         {
             timer -= Time.deltaTime;
+
+            timeDisplayFill.fillAmount = timer / loopDuration;
 
             if (timer <= 0f && clones.Count < maxClones && !playerInStartZone)
             {
@@ -130,6 +147,10 @@ public class LevelManager : MonoBehaviour
 
     void CompleteRecording()
     {
+        currentLoop.text = remainingClones.ToString();
+        loopTimeDisplay.enabled = false;
+        timeDisplayFill.enabled = false;
+
         timerRunning = false;
         recordingComplete = true;
         playerRecorder.StopRecording();
@@ -218,6 +239,9 @@ public class LevelManager : MonoBehaviour
             timer = loopDuration;
             recordingComplete = false;
 
+            loopTimeDisplay.enabled = true;
+            timeDisplayFill.enabled = true;
+            timeDisplayFill.fillAmount = 1;
         }
         else
         {
