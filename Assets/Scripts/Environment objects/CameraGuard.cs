@@ -12,7 +12,7 @@ public class CameraGuard : ActivatableItem
     protected bool playerNotSeen = true;
     public Quaternion originalTransformRotation;
     
-    void Awake(){
+    void Start(){
         originalTransformRotation = transform.parent.rotation;
         IsActive = playerNotSeen;
         meshRenderer = GetComponent<MeshRenderer>();
