@@ -12,8 +12,6 @@ public class Door : MonoBehaviour
     [Header("Current State")]
     [SerializeField] private bool hasAccess = false;
 
-    protected bool newAccessState = false;
-
     void Start()
     {
         startingPosition = transform.position;
@@ -48,10 +46,8 @@ public class Door : MonoBehaviour
             return;
         }
 
-        bool newAccessState;
-
         // All items must be active
-        newAccessState = true;
+        bool newAccessState = true;
         foreach (var item in activatableItems)
         {
             if (item != null && !item.IsActive)
@@ -63,15 +59,6 @@ public class Door : MonoBehaviour
 
         hasAccess = newAccessState;
 
-    }
-
-    // Public property to check current access state
-    public bool HasAccess => hasAccess;
-
-    // Public method to manually check access (useful for external calls)
-    public void RefreshAccess()
-    {
-        CheckAccess();
     }
 
     protected void OnActivatableItemChanged(bool isActive)

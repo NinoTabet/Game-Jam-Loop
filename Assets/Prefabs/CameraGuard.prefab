@@ -135,7 +135,7 @@ GameObject:
   - component: {fileID: 4471279733528967724}
   - component: {fileID: 1383372000436560792}
   m_Layer: 0
-  m_Name: Cube
+  m_Name: CameraGuard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
