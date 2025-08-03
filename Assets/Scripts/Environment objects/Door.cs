@@ -12,18 +12,9 @@ public class Door : MonoBehaviour
     [Header("Current State")]
     [SerializeField] private bool hasAccess = false;
 
-    void Start()
+    void Awake()
     {
         startingPosition = transform.position;
-
-        foreach (var item in activatableItems)
-        {
-            if (item != null)
-            {
-                // Subscribe to the activation changed event
-                item.onActivationChanged += (OnActivatableItemChanged);
-            }
-        }
 
         // Check initial access state
         CheckAccess();
@@ -70,6 +61,19 @@ public class Door : MonoBehaviour
             DoorClose();
         }
     }
+
+    void OnEnable()
+    {
+        foreach (var item in activatableItems)
+        {
+            if (item != null)
+            {
+                // Subscribe to the activation changed event
+                item.onActivationChanged += (OnActivatableItemChanged);
+            }
+        }
+    }
+
     void DoorOpen(){
         //transform door up by 100
         Debug.Log("Door Open MEOW");
