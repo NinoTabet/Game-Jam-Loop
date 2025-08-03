@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class PressurePlate : MonoBehaviour
+public class PressurePlate : ActivatableItem
 {
     [Header("Pressure Plate Settings")]
     public bool isActivated = false;
@@ -31,6 +31,7 @@ public class PressurePlate : MonoBehaviour
     void ActivatePlate()
     {
         isActivated = true;
+        IsActive = true;
     }
     
     void DeactivatePlate()

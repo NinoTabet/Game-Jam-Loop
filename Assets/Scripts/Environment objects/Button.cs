@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Button : MonoBehaviour
+public class Button : ActivatableItem
 {
     [Header("Button Settings")]
     public bool isActivated = false;
@@ -49,6 +49,7 @@ public class Button : MonoBehaviour
         isActivated = true;
         activationTimer = activationDuration;
         Debug.Log($"Button activated for {activationDuration} seconds!");
+        IsActive = true;
     }
     
     void DeactivateButton()
@@ -57,6 +58,7 @@ public class Button : MonoBehaviour
         cloneInRange = false;
         activationTimer = 0f;
         Debug.Log("Button deactivated!");
+        IsActive = false;
     }
     
     private void OnTriggerEnter(Collider other)
